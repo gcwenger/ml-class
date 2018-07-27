@@ -1,4 +1,4 @@
-from keras.layers import Input, Dense, Flatten, Reshape
+from keras.layers import Input, Dense, Flatten, Reshape, Conv2D, BatchNormalization
 from keras.models import Model, Sequential
 
 from keras.datasets import mnist
@@ -11,15 +11,25 @@ run = wandb.init()
 config = run.config
 
 config.encoding_dim = 32
-config.epochs = 1000
+config.epochs = 20
 
 (x_train, _), (x_test, _) = mnist.load_data()
 
 x_train = x_train.astype('float32') / 255.
 x_test = x_test.astype('float32') / 255.
 
+img_width = x_train.shape[1]
+img_height = x_train.shape[2]
+
 model = Sequential()
-model.add(Flatten(input_shape=(28,28)))
+model.add(Reshape((img_width, img_height, 1), input_shape=(img_width,img_height)))
+model.add(Conv2D(32, (3,3), activation='relu', padding='same'))
+model.add(BatchNormalization())
+model.add(Conv2D(32, (3,3), activation='relu', padding='same'))
+model.add(BatchNormalization())
+model.add(Conv2D(32, (3,3), activation='relu', padding='same'))
+model.add(BatchNormalization())
+model.add(Flatten())
 model.add(Dense(config.encoding_dim, activation='relu'))
 model.add(Dense(28*28, activation='sigmoid'))
 model.add(Reshape((28,28)))
