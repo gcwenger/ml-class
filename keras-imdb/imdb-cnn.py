@@ -2,7 +2,7 @@ from keras.preprocessing import sequence
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
 from keras.layers import Embedding, LSTM
-from keras.layers import Conv1D, Flatten
+from keras.layers import Conv1D, Flatten, MaxPooling1D
 from keras.datasets import imdb
 import wandb
 from wandb.keras import WandbCallback
@@ -17,10 +17,10 @@ config = wandb.config
 config.vocab_size = 1000
 config.maxlen = 1000
 config.batch_size = 32
-config.embedding_dims = 50
-config.filters = 250
+config.embedding_dims = 16
+config.filters = 16
 config.kernel_size = 3
-config.hidden_dims = 250
+config.hidden_dims = 128
 config.epochs = 10
 
 (X_train, y_train), (X_test, y_test) = imdb.load_imdb()
@@ -37,11 +37,21 @@ model = Sequential()
 model.add(Embedding(config.vocab_size,
                     config.embedding_dims,
                     input_length=config.maxlen))
-model.add(Dropout(0.5))
+model.add(Dropout(0.25))
 model.add(Conv1D(config.filters,
                  config.kernel_size,
                  padding='valid',
                  activation='relu'))
+model.add(MaxPooling1D(pool_size=2))
+model.add(Dropout(0.25))
+
+model.add(Conv1D(config.filters,
+                 config.kernel_size,
+                 padding='valid',
+                 activation='relu'))
+model.add(MaxPooling1D(pool_size=2))
+model.add(Dropout(0.25))
+
 model.add(Flatten())
 model.add(Dense(config.hidden_dims, activation='relu'))
 model.add(Dropout(0.5))
