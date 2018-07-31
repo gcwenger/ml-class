@@ -13,8 +13,8 @@ config.vocab_size = 1000
 
 tokenizer = text.Tokenizer(num_words=config.vocab_size)
 tokenizer.fit_on_texts(X_train)
-X_train = tokenizer.texts_to_matrix(X_train)
-X_test = tokenizer.texts_to_matrix(X_test)
+X_train = tokenizer.texts_to_matrix(X_train, mode="tfidf")
+X_test = tokenizer.texts_to_matrix(X_test, mode="tfidf")
 
 bow_model = LogisticRegression()
 bow_model.fit(X_train, y_train)
