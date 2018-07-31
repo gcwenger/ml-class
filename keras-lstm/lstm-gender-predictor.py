@@ -1,5 +1,5 @@
 from keras.models import Sequential
-from keras.layers.core import Dense, Activation, Dropout
+from keras.layers.core import Dense, Activation, Dropout, Flatten
 from keras.layers.recurrent import LSTM
 import wandb
 from wandb.keras import WandbCallback
@@ -9,7 +9,7 @@ import numpy as np
 wandb.init()
 config = wandb.config
 
-config.epochs = 10
+config.epochs = 20
 config.batch_size = 16
 
 def load_names():
@@ -20,21 +20,28 @@ def load_names():
         f_names = f.readlines()
 
     mf_names = []
+    maxlen = 0
 
     # remove the names that are both male and female
     for f_name in f_names:
         if f_name in m_names:
             mf_names.append(f_name)
-
+    
+    for m_name in m_names:
+        maxlen = max(maxlen, len(m_name))
+    for f_name in f_names:
+        maxlen = max(maxlen, len(f_name))
+            
     m_names = [m_name.lower() for m_name in m_names if not m_name in mf_names]
     f_names = [f_name.lower() for f_name in f_names if not f_name in mf_names]
 
-    return m_names, f_names
+    return m_names, f_names, maxlen
 
-m_names, f_names = load_names()
+m_names, f_names, maxlen = load_names()
     
 totalEntries = len(m_names) + len(f_names)
-maxlen = 20
+#maxlen = 20
+print("maxlen is: ", maxlen)
 
 chars = set(  "".join(m_names) + "".join(f_names)  )
 char_indices = dict((c, i) for i, c in enumerate(chars))
@@ -63,12 +70,15 @@ def vec2c(vec):
 
 model = Sequential()
 model.add(LSTM(512, return_sequences=True, input_shape=(maxlen, len(chars))))
+#model.add(Flatten(input_shape=(maxlen, len(chars))))
+#model.add(Dense(512, activation='relu'))
 model.add(Dropout(0.2))
 model.add(LSTM(512, return_sequences=False))
+#model.add(Dense(512, activation='relu'))
 model.add(Dropout(0.2))
 model.add(Dense(2, activation='softmax'))
 
 model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
 
-model.fit(X, y,validation_split=0.2, callbacks=[WandbCallback()])
+model.fit(X, y,validation_split=0.2, epochs=config.epochs, callbacks=[WandbCallback()])
 
